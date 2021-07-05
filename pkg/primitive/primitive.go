@@ -11,6 +11,12 @@ import (
 // Mode defines the shapes used when transforming the images
 type Mode int
 
+// ModeData represent the data of a particular Mode
+type ModeData struct {
+	Mode Mode   `json:"mode"`
+	Name string `json:"name"`
+}
+
 // List of all modes supported by the primitive CLI
 const (
 	ModeCombo Mode = iota
@@ -43,15 +49,20 @@ func splitCamelCase(s string) string {
 	return strings.Join(parts, " ")
 }
 
-// Modes returns a slice with all the supported modes
-func Modes() []string {
-	var modes []string
+// Modes returns a slice of ModeData
+func Modes() []*ModeData {
+	var modes []*ModeData
 
 	for i := 0; i < 8; i++ {
 		m := Mode(i).String()[4:]
 		m = splitCamelCase(m)
 
-		modes = append(modes, m)
+		data := &ModeData{
+			Mode: Mode(i),
+			Name: m,
+		}
+
+		modes = append(modes, data)
 	}
 
 	return modes
