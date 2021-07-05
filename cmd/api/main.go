@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
-	"gitlab.com/jwambugu/images_transformer/pkg/config"
+	"github.com/jwambugu/images-transformer/pkg/config"
 	"log"
+	"os"
+	"os/signal"
 )
 
 var (
@@ -11,6 +13,10 @@ var (
 	absolutePath   = config.GetAbsolutePath()
 	configKeysFile = fmt.Sprintf("%s%s", absolutePath, ".keys.json")
 )
+
+type application struct {
+	config *config.Config
+}
 
 func init() {
 	var err error
@@ -23,5 +29,25 @@ func init() {
 }
 
 func main() {
-	fmt.Println(absolutePath, configKeys)
+	app := &application{
+		config: configKeys,
+	}
+
+	fiberApp := app.routes()
+	addr := fmt.Sprintf(":%d", app.config.AppPort)
+
+	serverShutdownChan := make(chan os.Signal, 1)
+	signal.Notify(serverShutdownChan, os.Interrupt)
+	signal.Notify(serverShutdownChan, os.Kill)
+
+	go func() {
+		<-serverShutdownChan
+		log.Println("Gracefully shutting down the web server...")
+
+		_ = fiberApp.Shutdown()
+	}()
+
+	if err := fiberApp.Listen(addr); err != nil {
+		log.Panic(err)
+	}
 }
