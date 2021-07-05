@@ -14,10 +14,16 @@ func (app *application) routes() *fiber.App {
 	// Images route group
 	images := v1.Group("/images")
 
+	// Mode route group
+	modes := v1.Group("/modes")
+
 	// Images routes
 	images.Get("/", func(ctx *fiber.Ctx) error {
 		return nil
 	})
+
+	// Modes routes
+	modes.Get("/", app.getModesHandler)
 
 	// 404 Handler
 	fiberApp.Use(func(c *fiber.Ctx) error {
