@@ -53,7 +53,7 @@ func splitCamelCase(s string) string {
 func Modes() []*ModeData {
 	var modes []*ModeData
 
-	for i := 0; i < 8; i++ {
+	for i := 0; i <= 8; i++ {
 		m := Mode(i).String()[4:]
 		m = splitCamelCase(m)
 
