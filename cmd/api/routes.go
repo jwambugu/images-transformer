@@ -24,6 +24,7 @@ func (app *application) routes() *fiber.App {
 
 	// Modes routes
 	modes.Get("/", app.getModesHandler)
+	modes.Get("/no-of-shapes", app.getNumberOfShapesHandler)
 
 	// 404 Handler
 	fiberApp.Use(func(c *fiber.Ctx) error {

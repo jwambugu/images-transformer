@@ -13,3 +13,9 @@ func (app *application) getModesHandler(c *fiber.Ctx) error {
 		"modes": modes,
 	})
 }
+
+func (app *application) getNumberOfShapesHandler(c *fiber.Ctx) error {
+	return app.successResponse(c, fiber.StatusOK, map[string]interface{}{
+		"numberOfShapes": [...]int{10, 20, 30, 40, 50},
+	})
+}
