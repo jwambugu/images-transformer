@@ -18,9 +18,7 @@ func (app *application) routes() *fiber.App {
 	modes := v1.Group("/modes")
 
 	// Images routes
-	images.Get("/", func(ctx *fiber.Ctx) error {
-		return nil
-	})
+	images.Post("/", app.uploadImagesHandler)
 
 	// Modes routes
 	modes.Get("/", app.getModesHandler)

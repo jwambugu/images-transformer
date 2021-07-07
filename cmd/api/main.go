@@ -12,6 +12,7 @@ var (
 	configKeys     *config.Config
 	absolutePath   = config.GetAbsolutePath()
 	configKeysFile = fmt.Sprintf("%s%s", absolutePath, ".keys.json")
+	storagePath    = fmt.Sprintf("%s%s", absolutePath, "storage")
 )
 
 type application struct {
@@ -32,6 +33,8 @@ func main() {
 	app := &application{
 		config: configKeys,
 	}
+
+	fmt.Println(storagePath)
 
 	fiberApp := app.routes()
 	addr := fmt.Sprintf(":%d", app.config.AppPort)
