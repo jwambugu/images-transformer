@@ -9,10 +9,15 @@ import (
 )
 
 var (
-	configKeys     *config.Config
-	absolutePath   = config.GetAbsolutePath()
-	configKeysFile = fmt.Sprintf("%s%s", absolutePath, ".keys.json")
-	storagePath    = fmt.Sprintf("%s%s", absolutePath, "storage")
+	configKeys      *config.Config
+	absolutePath    = config.GetAbsolutePath()
+	configKeysFile  = fmt.Sprintf("%s%s", absolutePath, ".keys.json")
+	storagePath     = fmt.Sprintf("%s%s", absolutePath, "storage")
+	imageStorageDir = fmt.Sprintf("%s/files", storagePath)
+)
+
+const (
+	PublicImagePrefix = "/static/images"
 )
 
 type application struct {
@@ -34,7 +39,10 @@ func main() {
 		config: configKeys,
 	}
 
-	fmt.Println(storagePath)
+	//app.generateImages("storage/files/1625644406-goLogo.png", generateImageOptions{
+	//	NumberOfShapes: 10,
+	//	Mode:           primitive.Mode(1),
+	//})
 
 	fiberApp := app.routes()
 	addr := fmt.Sprintf(":%d", app.config.AppPort)

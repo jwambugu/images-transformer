@@ -1,6 +1,9 @@
 package main
 
-import "github.com/gofiber/fiber/v2"
+import (
+	"fmt"
+	"github.com/gofiber/fiber/v2"
+)
 
 func (app *application) routes() *fiber.App {
 	fiberApp := fiber.New()
@@ -23,6 +26,9 @@ func (app *application) routes() *fiber.App {
 	// Modes routes
 	modes.Get("/", app.getModesHandler)
 	modes.Get("/no-of-shapes", app.getNumberOfShapesHandler)
+
+	// File server
+	v1.Static(PublicImagePrefix, fmt.Sprintf("%s/files", storagePath))
 
 	// 404 Handler
 	fiberApp.Use(func(c *fiber.Ctx) error {
