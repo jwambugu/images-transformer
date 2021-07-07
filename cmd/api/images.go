@@ -6,7 +6,6 @@ import (
 	"github.com/jwambugu/images-transformer/pkg/primitive"
 	"io"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -74,6 +73,12 @@ func (app *application) generateImage(filename string, opt generateImageOptions)
 }
 
 func (app *application) uploadImagesHandler(c *fiber.Ctx) error {
+	file, err := c.FormFile("photos")
+
+	if err != nil {
+		return app.errorResponse(c, fiber.StatusBadRequest, err)
+	}
+
 	selectedMode := c.FormValue("mode")
 	selectedNumberOfShapes := c.FormValue("shapes")
 
@@ -94,24 +99,11 @@ func (app *application) uploadImagesHandler(c *fiber.Ctx) error {
 		Mode:           primitive.Mode(mode),
 	}
 
-	//storage/files/1625644406-goLogo.png
-
-	fmt.Println(selectedMode, selectedNumberOfShapes)
-
-	file, err := c.FormFile("photos")
-
-	if err != nil {
-		log.Fatalln(err)
-	}
-
 	filename := fmt.Sprintf("%d-%s", time.Now().Unix(), file.Filename)
 	filename = strings.ToLower(filename)
-
-	fileExtension := filepath.Ext(filename)[1:]
-
 	path := fmt.Sprintf("%s/files/%s", storagePath, filename)
-	fmt.Println(path, fileExtension)
 
+	// Save the file to the disk
 	if err := c.SaveFile(file, path); err != nil {
 		return app.errorResponse(c, fiber.StatusInternalServerError, err)
 	}
