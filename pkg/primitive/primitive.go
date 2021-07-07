@@ -2,7 +2,11 @@
 package primitive
 
 import (
+	"bytes"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"os"
 	"os/exec"
 	"strings"
 	"unicode"
@@ -11,11 +15,13 @@ import (
 // Mode defines the shapes used when transforming the images
 type Mode int
 
-// ModeData represent the data of a particular Mode
-type ModeData struct {
-	Mode Mode   `json:"mode"`
-	Name string `json:"name"`
-}
+type (
+	// ModeData represent the data of a particular Mode
+	ModeData struct {
+		Mode Mode   `json:"mode"`
+		Name string `json:"name"`
+	}
+)
 
 // List of all modes supported by the primitive CLI
 const (
@@ -81,4 +87,81 @@ func primitive(inputFile, outputFile string, numberOfShapes int, args ...string)
 	}
 
 	return output, nil
+}
+
+// createTempFile creates temp file in the default temp file dir
+func createTempFile(prefix, extension string) (*os.File, error) {
+	tempFile, err := ioutil.TempFile("", prefix)
+
+	if err != nil {
+		return nil, fmt.Errorf("primitive.createTempFile.TempFile:: %v", err)
+	}
+
+	defer func(name string) {
+		_ = os.Remove(name)
+	}(tempFile.Name())
+
+	fileToCreate := fmt.Sprintf("%s.%s", tempFile.Name(), extension)
+
+	file, err := os.Create(fileToCreate)
+
+	if err != nil {
+		return nil, fmt.Errorf("primitive.createTempFile.OSCreate:: %v", err)
+	}
+
+	return file, nil
+}
+
+// WithMode returns the Mode to use to transform the image
+// Default Mode is ModeTriangle
+func WithMode(m Mode) func() []string {
+	return func() []string {
+		return []string{"-m", fmt.Sprintf("%d", m)}
+	}
+}
+
+// Transform takes the provided image and applies primitive transformation to it then returns a reader
+// to the modified image
+func Transform(image io.Reader, extension string, numberOfShapes int, opts ...func() []string) (io.Reader, error) {
+	var args []string
+
+	for _, opt := range opts {
+		args = append(args, opt()...)
+	}
+
+	inputTempFile, err := createTempFile("input_", extension)
+
+	if err != nil {
+		return nil, fmt.Errorf("primitive: failed to create temp input file:: %v", err)
+	}
+
+	outputTempFile, err := createTempFile("output_", extension)
+
+	if err != nil {
+		return nil, fmt.Errorf("primitive: failed to create temp output file:: %v", err)
+	}
+
+	// Read the image
+	_, err = io.Copy(inputTempFile, image)
+
+	if err != nil {
+		return nil, fmt.Errorf("primitive.Transform.CopyTempImage:: %v", err)
+	}
+
+	_, err = primitive(inputTempFile.Name(), outputTempFile.Name(), numberOfShapes, args...)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Read out into a reader, return reader and delete out
+	b := bytes.NewBuffer(nil)
+
+	_, err = io.Copy(b, outputTempFile)
+
+	if err != nil {
+		return nil, fmt.Errorf("primitive.Transform.CopyTempOutputImage:: %v", err)
+	}
+
+	return b, nil
 }
