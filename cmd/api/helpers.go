@@ -16,6 +16,8 @@ func (app *application) successResponse(c *fiber.Ctx, status int, data map[strin
 func (app *application) errorResponse(c *fiber.Ctx, status int, error interface{}) error {
 	return c.Status(status).JSON(fiber.Map{
 		"status": status,
-		"data":   error,
+		"data": map[string]interface{}{
+			"error": error,
+		},
 	})
 }
