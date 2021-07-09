@@ -15,13 +15,13 @@ func (app *application) getModesHandler(c *fiber.Ctx) error {
 }
 
 func (app *application) getNumberOfShapesHandler(c *fiber.Ctx) error {
-	var numberOfShapes []int
-
-	for i := 15; i <= 25; i++ {
-		numberOfShapes = append(numberOfShapes, i*10)
-	}
+	//var numberOfShapes []int
+	//
+	//for i := 15; i <= 25; i++ {
+	//	numberOfShapes = append(numberOfShapes, i*10)
+	//}
 
 	return app.successResponse(c, fiber.StatusOK, map[string]interface{}{
-		"numberOfShapes": numberOfShapes,
+		"numberOfShapes": []int{100, 150, 200},
 	})
 }

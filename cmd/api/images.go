@@ -115,10 +115,12 @@ func (app *application) uploadImagesHandler(c *fiber.Ctx) error {
 		return app.errorResponse(c, fiber.StatusInternalServerError, err)
 	}
 
-	publicURL := fmt.Sprintf("%s/v1%s/%s", app.config.AppURL, PublicImagePrefix, generatedImage)
+	transformedImageURL := fmt.Sprintf("%s/v1%s/%s", app.config.AppURL, PublicImagePrefix, generatedImage)
+	originalImageURL := fmt.Sprintf("%s/v1%s/%s", app.config.AppURL, PublicImagePrefix, filename)
 
 	return app.successResponse(c, fiber.StatusOK, map[string]interface{}{
-		"filename": generatedImage,
-		"url":      publicURL,
+		"filename":            generatedImage,
+		"transformedImageURL": transformedImageURL,
+		"originalImageURL":    originalImageURL,
 	})
 }
