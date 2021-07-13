@@ -76,7 +76,7 @@ func (app *application) uploadImagesHandler(c *fiber.Ctx) error {
 	file, err := c.FormFile("photos")
 
 	if err != nil {
-		return app.errorResponse(c, fiber.StatusBadRequest, err)
+		return app.errorResponse(c, fiber.StatusBadRequest, err.Error())
 	}
 
 	selectedMode := c.FormValue("mode")
@@ -94,11 +94,6 @@ func (app *application) uploadImagesHandler(c *fiber.Ctx) error {
 		return app.errorResponse(c, fiber.StatusBadRequest, err)
 	}
 
-	imageOptions := generateImageOptions{
-		NumberOfShapes: numberOfShapes,
-		Mode:           primitive.Mode(mode),
-	}
-
 	filename := fmt.Sprintf("%d-%s", time.Now().Unix(), file.Filename)
 	filename = strings.ToLower(filename)
 	path := fmt.Sprintf("%s/files/%s", storagePath, filename)
@@ -108,19 +103,55 @@ func (app *application) uploadImagesHandler(c *fiber.Ctx) error {
 		return app.errorResponse(c, fiber.StatusInternalServerError, err)
 	}
 
-	generatedImage, err := app.generateImage(path, imageOptions)
-	generatedImage = filepath.Base(generatedImage)
-
-	if err != nil {
-		return app.errorResponse(c, fiber.StatusInternalServerError, err)
+	imageOptions := generateImageOptions{
+		NumberOfShapes: numberOfShapes,
+		Mode:           primitive.Mode(mode),
 	}
 
-	transformedImageURL := fmt.Sprintf("%s/v1%s/%s", app.config.AppURL, PublicImagePrefix, generatedImage)
+	type transformedImage struct {
+		url  string
+		name string
+		err  error
+	}
+
+	transformedImageChan := make(chan transformedImage)
+	defer close(transformedImageChan)
+
+	start := time.Now()
+
+	go func() {
+		defer fmt.Println(time.Since(start).Seconds())
+
+		generatedImage, err := app.generateImage(path, imageOptions)
+
+		if err != nil {
+			transformedImageChan <- transformedImage{
+				err: err,
+			}
+
+			return
+		}
+
+		generatedImage = filepath.Base(generatedImage)
+		transformedImageURL := fmt.Sprintf("%s/v1%s/%s", app.config.AppURL, PublicImagePrefix, generatedImage)
+
+		transformedImageChan <- transformedImage{
+			url:  transformedImageURL,
+			name: generatedImage,
+		}
+	}()
+
+	chanData := <-transformedImageChan
+
+	if chanData.err != nil {
+		return app.errorResponse(c, fiber.StatusInternalServerError, chanData.err)
+	}
+
 	originalImageURL := fmt.Sprintf("%s/v1%s/%s", app.config.AppURL, PublicImagePrefix, filename)
 
 	return app.successResponse(c, fiber.StatusOK, map[string]interface{}{
-		"filename":            generatedImage,
-		"transformedImageURL": transformedImageURL,
+		"filename":            chanData.name,
+		"transformedImageURL": chanData.url,
 		"originalImageURL":    originalImageURL,
 	})
 }
